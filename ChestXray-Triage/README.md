@@ -43,9 +43,9 @@ chestxray-triage/
   scripts/          # preprocessing & setup scripts
   notebooks/        # EDA, error analysis, ablations
   tests/            # unit tests for reproducibility
-  environment.yml   # conda environment file
-  requirements.txt  # pip dependencies
-  Makefile          # one-line workflows
+  environment.yml   
+  requirements.txt  
+  Makefile          
 ```
 
 ---
