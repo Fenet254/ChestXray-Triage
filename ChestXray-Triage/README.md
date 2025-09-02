@@ -1,201 +1,155 @@
-# ChestXray-Triage: AI System for Multi-Disease Chest X-Ray Triage
+# ChestXray‑Triage — Deep Learning Capstone
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-orange)
-![License](https://img.shields.io/badge/License-MIT-green)
+## 🚀 Overview
 
-An end-to-end deep learning system for triaging chest X-rays by detecting pneumonia, tuberculosis, and pleural effusion, with urgency ranking and visual explanations using Grad-CAM.
+This project is a **full‑stack deep learning system** for multi‑label chest X‑ray triage. It predicts multiple thoracic diseases (e.g., Pneumonia, Tuberculosis, Pleural Effusion) from chest radiographs, ranks urgency, and provides visual explanations with **Grad‑CAM heatmaps**. The project follows a **1‑month end‑to‑end workflow**: idea → dataset → model → improvements → evaluation → deployment → documentation → presentation.
 
-## 📋 Project Overview
+⚠️ **Disclaimer**: This system is for **educational and research purposes only**. It is **not a medical diagnostic tool** and must not be used for clinical decision‑making.
 
-This project implements a deep learning solution for automated chest X-ray analysis that:
-- Classifies X-rays into four categories: Normal, Pneumonia, Tuberculosis, Pleural Effusion
-- Ranks cases by clinical urgency
-- Provides visual explanations using Grad-CAM to highlight affected areas
-- Offers a web-based interface for easy deployment
+---
 
-## 🚀 Quick Start
+## 📌 Goals
 
-### Prerequisites
+* Build a reproducible **computer vision pipeline** for chest X‑ray triage.
+* Implement a **baseline model** and at least **three meaningful improvements**.
+* Evaluate with AUROC, F1, PR‑AUC, confusion matrices, calibration, and error analysis.
+* Deploy a working demo (web app with Streamlit/FastAPI).
+* Deliver full documentation: Data Card, research paper, PPT deck, and recorded videos.
 
-- Python 3.8+
-- GPU with CUDA support (recommended)
+---
 
-### Installation
+## 📂 Repository Structure
 
-1. Clone the repository:
-```bash
-git clone https://github.com/your-username/ChestXray-Triage.git
-cd ChestXray-Triage
+```
+chestxray-triage/
+  README.md
+  RUN.md
+  LICENSE
+  data/
+    raw/            # raw datasets (gitignored)
+    processed/      # processed splits & metadata
+    metadata.csv
+    label_map.json
+  configs/          # experiment configs (baseline, improvements)
+  src/
+    data/           # dataset & transform loaders
+    models/         # model definitions
+    app/            # deployment (Streamlit/FastAPI)
+    train.py        # training script
+    eval.py         # evaluation script
+    gradcam.py      # Grad-CAM explainability
+    export.py       # ONNX/TFLite export
+    infer.py        # CLI inference
+  scripts/          # preprocessing & setup scripts
+  notebooks/        # EDA, error analysis, ablations
+  tests/            # unit tests for reproducibility
+  environment.yml   # conda environment file
+  requirements.txt  # pip dependencies
+  Makefile          # one-line workflows
 ```
 
-2. Create and activate conda environment:
+---
+
+## ⚙️ Quickstart
+
+### 1. Setup environment
+
 ```bash
 conda env create -f environment.yml
-conda activate chestxray-triage
+conda activate cxr
 ```
 
-3. Download and prepare data (see Data section below)
-
-### One-Command Reproduction
+### 2. Prepare data
 
 ```bash
-./run_project.sh
-```
-This script will:
-1. Install dependencies
-2. Download and preprocess data
-3. Train the baseline model and improvements
-4. Evaluate on test set
-5. Launch the web demo
-
-## 📁 Project Structure
-
-```
-ChestXray-Triage/
-├── data/
-│   ├── raw/                    # Original images
-│   ├── processed/              # Processed images
-│   ├── splits/                 # Train/val/test splits
-│   └── metadata.csv            # Image metadata
-├── models/
-│   ├── baseline.py             # Baseline model
-│   ├── improved_model.py       # Enhanced model
-│   └── model_utils.py          # Model utilities
-├── training/
-│   ├── train_baseline.py       # Baseline training
-│   ├── train_improved.py       # Improved model training
-│   └── configs/                # Training configurations
-├── evaluation/
-│   ├── evaluate.py             # Evaluation scripts
-│   ├── metrics.py              # Custom metrics
-│   └── results/                # Evaluation results
-├── deployment/
-│   ├── app.py                  # Gradio/Streamlit app
-│   ├── inference.py            # Inference script
-│   └── demo_images/            # Sample images for demo
-├── utils/
-│   ├── data_loader.py          # Data loading utilities
-│   ├── preprocessing.py        # Image preprocessing
-│   └── visualization.py        # Visualization utilities
-├── environment.yml             # Conda environment
-├── requirements.txt            # Pip requirements
-└── run_project.sh              # One-click reproduction script
+python scripts/preprocess.py --config configs/baseline.yaml
 ```
 
-## 📊 Dataset
+### 3. Train a baseline
 
-The dataset consists of 800+ chest X-ray images across four classes:
-
-| Class | Number of Images | Percentage |
-|-------|------------------|------------|
-| Normal | 220 | 27.5% |
-| Pneumonia | 210 | 26.2% |
-| Tuberculosis | 190 | 23.8% |
-| Pleural Effusion | 180 | 22.5% |
-
-**Data Sources:**
-- 45% self-collected from collaborating medical institutions (with proper consent)
-- 55% from public datasets: CheXpert, NIH ChestXray, MIMIC-CXR
-
-**Data Splits:**
-- Training: 70% (560 images)
-- Validation: 15% (120 images)
-- Test: 15% (120 images)
-
-For detailed information about data collection, labeling, and ethics, see [DATA_CARD.md](docs/DATA_CARD.md).
-
-## 🧠 Models
-
-### Baseline Model
-- Architecture: ResNet-18
-- Input size: 224×224
-- Optimizer: Adam (lr=0.001)
-- Loss: Cross-Entropy
-- Data: Basic normalization only
-
-### Improvements
-
-1. **Data Augmentation** (Albumentations)
-   - Random flips, rotations, brightness/contrast adjustments
-   - Elastic transformations, grid distortion
-
-2. **Advanced Architecture** (EfficientNet-B3)
-   - Better feature extraction with mobile inverted bottleneck convolution
-   - Improved parameter efficiency
-
-3. **Focal Loss + Label Smoothing**
-   - Addresses class imbalance
-   - Reduces overconfidence on easy examples
-
-4. **Grad-CAM Integration**
-   - Provides visual explanations for predictions
-   - Highlights regions influencing decisions
-
-## 📈 Results
-
-### Performance Metrics (Test Set)
-
-| Model | Accuracy | Macro F1 | Precision | Recall |
-|-------|----------|----------|-----------|--------|
-| Baseline (ResNet-18) | 78.3% | 76.2% | 77.1% | 76.8% |
-| + Augmentation | 81.5% | 79.8% | 80.2% | 80.1% |
-| + EfficientNet-B3 | 85.2% | 83.7% | 84.1% | 83.9% |
-| + Focal Loss | **87.6%** | **86.3%** | **86.7%** | **86.2%** |
-
-### Confusion Matrix
-![Confusion Matrix](evaluation/results/confusion_matrix.png)
-
-### ROC Curves
-![ROC Curves](evaluation/results/roc_curves.png)
-
-## 🎯 Deployment
-
-### Web Demo (Gradio)
 ```bash
-python deployment/app.py
+python -m src.train --config configs/baseline.yaml
 ```
-Access the demo at `http://localhost:7860`
 
-Features:
-- Upload chest X-ray images
-- View predictions with confidence scores
-- See urgency ranking (High/Medium/Low priority)
-- Visualize Grad-CAM heatmaps
-- Measure inference latency
+### 4. Evaluate
 
-### CLI Inference
 ```bash
-python deployment/inference.py --image path/to/image.jpg
+python -m src.eval --ckpt runs/baseline/best.ckpt --split test
 ```
 
-### Export to ONNX/TFLite
+### 5. Run Grad‑CAM
+
 ```bash
-python deployment/export_model.py --format onnx
-python deployment/export_model.py --format tflite
+python -m src.gradcam --ckpt runs/final/best.ckpt --images demo/
 ```
 
-## 📝 Documentation
+### 6. Launch demo app
 
-- [Project Paper](docs/CHESTXRAY_TRIAGE_PAPER.pdf): Detailed technical report
-- [Data Card](docs/DATA_CARD.md): Dataset documentation and ethics statement
-- [Presentation Slides](docs/CHESTXRAY_TRIAGE_PRESENTATION.pdf): Project summary
-- [Demo Videos](docs/VIDEOS.md): Links to implementation videos
+```bash
+streamlit run src/app/streamlit_app.py
+```
 
-## 👥 Authors
+---
 
-- [Your Name] - [Your Contact Information]
+## 🧪 Model Improvements (Planned)
 
-## 🙏 Acknowledgments
+1. **Stronger backbone & higher resolution** (EfficientNetV2 / ConvNeXt).
+2. **Loss functions for class imbalance** (Focal loss, class‑weighted BCE).
+3. **Calibration & TTA** (temperature scaling, test‑time augmentations).
 
-- Medical institutions that provided anonymized data
-- Public dataset providers: CheXpert, NIH, MIMIC-CXR
-- Open-source libraries: PyTorch, TorchVision, Albumentations, Gradio
+Optional: MixUp/CutMix, self‑supervised pretraining, lightweight ensembling.
 
-## ⚠️ Disclaimer
+---
 
-This system is intended for research and educational purposes only. It is not certified for clinical use and should not replace professional medical diagnosis. Always consult healthcare professionals for medical advice.
+## 📊 Evaluation Metrics
 
-## 📄 License
+* **Macro AUROC** (primary)
+* **Macro & per‑class F1**
+* **Precision‑Recall AUC** for critical classes (TB, Pneumonia, Effusion)
+* **Confusion matrices** & **error boards**
+* **Calibration metrics** (ECE, reliability diagrams)
+* **Latency measurements** (GPU vs CPU)
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+---
+
+## 🖥️ Deployment
+
+* **Streamlit UI**: Upload image → model predicts → urgency ranking + Grad‑CAM heatmaps.
+* **FastAPI endpoint**: `/predict` returns JSON with per‑class probabilities, urgency score, latency.
+* **ONNX/TFLite export**: Optional edge/mobile deployment with quantization.
+
+---
+
+## 📑 Deliverables
+
+* ✅ Dataset (≥500 images, ≥40% curated/self‑collected)
+* ✅ Baseline + 3 improvements
+* ✅ Full evaluation & ablations
+* ✅ Working demo (web app)
+* ✅ Data Card (2 pages)
+* ✅ Research Paper (PDF, template format)
+* ✅ PPT deck (10–12 slides)
+* ✅ Recorded videos (5 stages)
+
+---
+
+## 📅 Timeline
+
+* **Week 1**: Define problem, collect pilot data, baseline.
+* **Week 2**: Expand dataset, train baseline to convergence, start deployment.
+* **Week 3**: Add improvements (backbone, loss, calibration), error analysis, export model.
+* **Week 4**: Final evaluation, deployment polish, documentation, videos, submission.
+
+---
+
+## 📜 License & Citation
+
+* Open‑source license (MIT or Apache 2.0 recommended).
+* Cite all datasets (CheXpert, NIH, PadChest, etc.) and external libraries used.
+
+---
+
+## 🙏 Acknowledgements
+
+* Public datasets: CheXpert, NIH ChestX‑ray14, PadChest, Shenzhen & Montgomery TB datasets.
+* Libraries: PyTorch, Torchvision, Timm, Albumentations, Grad‑CAM, Streamlit, FastAPI.
