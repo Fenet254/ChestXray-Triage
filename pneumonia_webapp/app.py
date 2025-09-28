@@ -49,3 +49,58 @@ def home():
 
 if __name__ == "__main__":
     app.run(debug=True)
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from datetime import datetime
+
+def generate_pdf(patient_data, predictions, output_path):
+    c = canvas.Canvas(output_path, pagesize=letter)
+    width, height = letter
+    y = height - 50
+
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(50, y, "Pneumonia Detection Report")
+    y -= 30
+
+    c.setFont("Helvetica", 12)
+    c.drawString(50, y, f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    y -= 20
+    c.drawString(50, y, f"Name: {patient_data['name']}")
+    y -= 20
+    c.drawString(50, y, f"Age: {patient_data['age']}")
+    y -= 20
+    c.drawString(50, y, f"Gender: {patient_data['gender']}")
+    y -= 20
+    c.drawString(50, y, f"Symptoms: {patient_data['symptoms']}")
+    y -= 40
+
+    for i, result in enumerate(predictions):
+        if y < 150:
+            c.showPage()
+            y = height - 50
+
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(50, y, f"Image {i+1}: {result['filename']}")
+        y -= 20
+        c.setFont("Helvetica", 12)
+        c.drawString(50, y, f"Prediction: {result['label']} ({result['confidence']}% confidence)")
+        y -= 20
+
+        try:
+            c.drawImage(result['filepath'], 50, y - 150, width=200, height=150)
+            y -= 170
+        except:
+            c.drawString(50, y, "Image preview unavailable.")
+            y -= 30
+
+    c.save()
+from flask import send_file
+
+@app.route("/download_report", methods=["POST"])
+def download_report():
+    patient_data = request.form.to_dict()
+    predictions = eval(request.form["predictions"])  # Use safer serialization in production
+
+    pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{uuid.uuid4().hex}_report.pdf")
+    generate_pdf(patient_data, predictions, pdf_path)
+    return send_file(pdf_path, as_attachment=True)

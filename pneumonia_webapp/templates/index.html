@@ -117,41 +117,52 @@
         {% if predictions %}
             {% for result in predictions %}
                 <div class="image-block">
-                    <img src="{{ result.filepath }}" alt="X-ray Image">
-                    <div class="prediction">
-                        {{ result.label }} ({{ result.confidence }}% confidence)
-                    </div>
-                    <canvas id="chart{{ loop.index }}" width="400" height="200"></canvas>
-                    <script>
-                        const ctx{{ loop.index }} = document.getElementById('chart{{ loop.index }}').getContext('2d');
-                        new Chart(ctx{{ loop.index }}, {
-                            type: 'bar',
-                            data: {
-                                labels: ['{{ result.label }}'],
-                                datasets: [{
-                                    label: 'Confidence (%)',
-                                    data: [{{ result.confidence }}],
-                                    backgroundColor: '{{ result.label }}' === 'PNEUMONIA' ? '#d9534f' : '#5cb85c',
-                                    borderColor: '#333',
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: {
-                                scales: {
-                                    y: {
-                                        beginAtZero: true,
-                                        max: 100
-                                    }
-                                },
-                                plugins: {
-                                    legend: {
-                                        display: false
-                                    }
-                                }
-                            }
-                        });
-                    </script>
-                </div>
+    <img src="{{ result.filepath }}" alt="X-ray Image">
+    <div class="prediction">
+        {{ result.label }} ({{ result.confidence }}% confidence)
+    </div>
+    <canvas id="chart{{ loop.index }}" width="400" height="200"></canvas>
+</div>
+<form method="POST" action="/download_report">
+    <input type="hidden" name="patient_name" value="{{ patient.name }}">
+    <input type="hidden" name="patient_age" value="{{ patient.age }}">
+    <input type="hidden" name="patient_gender" value="{{ patient.gender }}">
+    <input type="hidden" name="patient_symptoms" value="{{ patient.symptoms }}">
+    <input type="hidden" name="predictions" value="{{ predictions | tojson }}">
+    <button type="submit">Download PDF Report</button>
+</form>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const ctx = document.getElementById("chart{{ loop.index }}").getContext("2d");
+        new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: ["{{ result.label }}"],
+                datasets: [{
+                    label: "Confidence (%)",
+                    data: [{{ result.confidence|safe }}],
+                    backgroundColor: "{{ result.label }}" === "PNEUMONIA" ? "#d9534f" : "#5cb85c",
+                    borderColor: "#333",
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    });
+</script>
+   </div>
             {% endfor %}
         {% endif %}
     </div>
