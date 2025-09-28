@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Pneumonia Detection</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<canvas id="chart{{ loop.index }}"></canvas>
 </head>
 <body>
   <div class="container">
@@ -75,33 +77,5 @@
   </div>
 
   <!-- Chart.js Script -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      {% for result in predictions %}
-      const ctx = document.getElementById("chart{{ loop.index }}").getContext("2d");
-      new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: ["{{ result.label }}"],
-          datasets: [{
-            label: "Confidence (%)",
-            data: [{{ result.confidence }}],
-            backgroundColor: "{{ result.label }}" === "PNEUMONIA" ? "#d9534f" : "#5cb85c",
-            borderColor: "#333",
-            borderWidth: 1
-          }]
-        },
-        options: {
-          scales: {
-            y: { beginAtZero: true, max: 100 }
-          },
-          plugins: {
-            legend: { display: false }
-          }
-        }
-      });
-      {% endfor %}
-    });
-  </script>
-</body>
+  </body>
 </html>
