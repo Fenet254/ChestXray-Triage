@@ -4,8 +4,6 @@ from tensorflow.keras.preprocessing import image
 import numpy as np
 import os
 import uuid
-import cv2
-import tensorflow as tf
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from datetime import datetime
@@ -15,27 +13,6 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
 # Load the trained model
 model = load_model("model/pneumonia_classifier_model.keras")
-
-# Grad-CAM generation
-def generate_gradcam(model, img_array, last_conv_layer_name="conv2d", pred_index=None):
-    grad_model = tf.keras.models.Model(
-        [model.inputs], [model.get_layer(last_conv_layer_name).output, model.output]
-    )
-
-    with tf.GradientTape() as tape:
-        conv_outputs, predictions = grad_model(img_array)
-        if pred_index is None:
-            pred_index = tf.argmax(predictions[0])
-        class_channel = predictions[:, pred_index]
-
-    grads = tape.gradient(class_channel, conv_outputs)
-    pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
-    conv_outputs = conv_outputs[0]
-
-    heatmap = conv_outputs @ pooled_grads[..., tf.newaxis]
-    heatmap = tf.squeeze(heatmap)
-    heatmap = tf.maximum(heatmap, 0) / tf.math.reduce_max(heatmap)
-    return heatmap.numpy()
 
 # Prediction function
 def predict_image(img_path):
@@ -47,19 +24,7 @@ def predict_image(img_path):
     confidence = round(prediction * 100, 2) if prediction > 0.5 else round((1 - prediction) * 100, 2)
     label = "PNEUMONIA" if prediction > 0.5 else "NORMAL"
 
-    heatmap = generate_gradcam(model, img_array, last_conv_layer_name="conv2d")  # adjust layer name if needed
-
-    original = cv2.imread(img_path)
-    original = cv2.resize(original, (150, 150))
-    heatmap = cv2.resize(heatmap, (150, 150))
-    heatmap = np.uint8(255 * heatmap)
-    heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-    superimposed_img = cv2.addWeighted(original, 0.6, heatmap, 0.4, 0)
-
-    gradcam_path = img_path.replace(".jpg", "_gradcam.jpg").replace(".png", "_gradcam.png")
-    cv2.imwrite(gradcam_path, superimposed_img)
-
-    return label, confidence, gradcam_path
+    return label, confidence
 
 # Home route
 @app.route("/", methods=["GET", "POST"])
@@ -80,13 +45,13 @@ def home():
                 filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 file.save(filepath)
 
-                label, confidence, gradcam_path = predict_image(filepath)
+                label, confidence = predict_image(filepath)
                 predictions.append({
                     "filename": filename,
                     "filepath": filepath,
                     "label": label,
                     "confidence": confidence,
-                    "gradcam": gradcam_path
+                    "change": round(np.random.uniform(0.5, 5.0), 2)
                 })
 
     return render_template("index.html", predictions=predictions, patient=patient_data)

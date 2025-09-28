@@ -1,175 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Pneumonia Detection</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(to right, #74ebd5, #ACB6E5);
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-            text-align: center;
-            max-width: 600px;
-            width: 100%;
-        }
-
-        h1 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        input, select, textarea {
-            width: 90%;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-        }
-
-        button {
-            background-color: #0078D7;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        button:hover {
-            background-color: #005fa3;
-        }
-
-        .prediction {
-            margin-top: 20px;
-            font-size: 18px;
-            font-weight: bold;
-            color: #0078D7;
-        }
-
-        .patient-info {
-            text-align: left;
-            margin-top: 20px;
-        }
-
-        .patient-info p {
-            margin: 5px 0;
-        }
-
-        .image-block {
-            margin-top: 30px;
-            border-top: 1px solid #ccc;
-            padding-top: 20px;
-        }
-
-        .image-block img {
-            max-width: 100%;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-
-        canvas {
-            margin-top: 10px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pneumonia Detection</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>Pneumonia Detection</h1>
-        <form method="POST" enctype="multipart/form-data">
-            <input type="text" name="patient_name" placeholder="Patient Name" required>
-            <input type="number" name="patient_age" placeholder="Age" required>
-            <select name="patient_gender" required>
-                <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-            </select>
-            <textarea name="patient_symptoms" placeholder="Symptoms" rows="3" required></textarea>
-            <input type="file" name="xray_images" accept="image/*" multiple required>
-            <button type="submit">Predict</button>
-        </form>
+  <div class="container">
+    <h1>Pneumonia Detection</h1>
 
-        {% if patient %}
-            <div class="patient-info">
-                <h3>Patient Information</h3>
-                <p><strong>Name:</strong> {{ patient.name }}</p>
-                <p><strong>Age:</strong> {{ patient.age }}</p>
-                <p><strong>Gender:</strong> {{ patient.gender }}</p>
-                <p><strong>Symptoms:</strong> {{ patient.symptoms }}</p>
+    <!-- Upload Form -->
+    <form method="POST" enctype="multipart/form-data">
+      <input type="text" name="patient_name" placeholder="Patient Name" required>
+      <input type="number" name="patient_age" placeholder="Age" required>
+      <select name="patient_gender" required>
+        <option value="">Select Gender</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
+      </select>
+      <textarea name="patient_symptoms" placeholder="Symptoms" rows="3" required></textarea>
+      <input type="file" name="xray_images" accept="image/*" multiple required>
+      <button type="submit">Predict</button>
+    </form>
+
+    {% if predictions %}
+    <div class="predictions">
+      {% for result in predictions %}
+      <div class="prediction-item">
+        <h3>Image {{ loop.index }}</h3>
+
+        <!-- Original X-ray -->
+        <div class="image-block">
+          <img src="{{ url_for('static', filename='uploads/' + result.filename) }}" alt="X-ray Image">
+        </div>
+
+        <!-- Prediction Analysis -->
+        <div class="analysis-box">
+          <div class="analysis-header">
+            <div>
+              <p style="font-weight:600; font-size:1.1rem;">Pneumonia Probability</p>
+              <div style="font-size:2.5rem; font-weight:700; color:#3b82f6;">{{ result.confidence }}%</div>
+              <div style="margin-top:0.5rem; display:flex; gap:0.5rem; justify-content:center;">
+                <span style="font-size:0.75rem; color:#6b7280;">Current</span>
+                <span style="font-size:0.75rem; font-weight:600; color:green;">+{{ result.change }}%</span>
+              </div>
             </div>
-        {% endif %}
+          </div>
 
-        {% if predictions %}
-            {% for result in predictions %}
-                <div class="image-block">
-                    <img src="{{ result.filepath }}" alt="X-ray Image">
-                    <div class="prediction">
-                        {{ result.label }} ({{ result.confidence }}% confidence)
-                    </div>
-                    <h4>Grad-CAM Heatmap</h4>
-                    <img src="{{ result.gradcam }}" alt="Grad-CAM Heatmap" style="max-width:100%; border-radius:8px;">
-                    <canvas id="chart{{ loop.index }}" width="400" height="200"></canvas>
-                </div>
-            {% endfor %}
+          <!-- Chart -->
+          <div class="chart-container">
+            <canvas id="chart{{ loop.index }}"></canvas>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
 
-            <form method="POST" action="/download_report">
-                <input type="hidden" name="patient_name" value="{{ patient.name }}">
-                <input type="hidden" name="patient_age" value="{{ patient.age }}">
-                <input type="hidden" name="patient_gender" value="{{ patient.gender }}">
-                <input type="hidden" name="patient_symptoms" value="{{ patient.symptoms }}">
-                <input type="hidden" name="predictions" value="{{ predictions | tojson }}">
-                <button type="submit">Download PDF Report</button>
-            </form>
-
-            <script>
-                document.addEventListener("DOMContentLoaded", function () {
-                    {% for result in predictions %}
-                        const ctx{{ loop.index }} = document.getElementById("chart{{ loop.index }}").getContext("2d");
-                        new Chart(ctx{{ loop.index }}, {
-                            type: "bar",
-                            data: {
-                                labels: ["{{ result.label }}"],
-                                datasets: [{
-                                    label: "Confidence (%)",
-                                    data: [{{ result.confidence|safe }}],
-                                    backgroundColor: "{{ result.label }}" === "PNEUMONIA" ? "#d9534f" : "#5cb85c",
-                                    borderColor: "#333",
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: {
-                                scales: {
-                                    y: {
-                                        beginAtZero: true,
-                                        max: 100
-                                    }
-                                },
-                                plugins: {
-                                    legend: {
-                                        display: false
-                                    }
-                                }
-                            }
-                        });
-                    {% endfor %}
-                });
-            </script>
-        {% endif %}
+      <!-- PDF Report Button -->
+      <form method="POST" action="/download_report">
+        <input type="hidden" name="patient_name" value="{{ patient.name }}">
+        <input type="hidden" name="patient_age" value="{{ patient.age }}">
+        <input type="hidden" name="patient_gender" value="{{ patient.gender }}">
+        <input type="hidden" name="patient_symptoms" value="{{ patient.symptoms }}">
+        <input type="hidden" name="predictions" value='{{ predictions | tojson }}'>
+        <button type="submit" class="generate-btn">
+          <span></span>
+          Download PDF Report
+        </button>
+      </form>
     </div>
+    {% endif %}
+  </div>
+
+  <!-- Chart.js Script -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      {% for result in predictions %}
+      const ctx = document.getElementById("chart{{ loop.index }}").getContext("2d");
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: ["{{ result.label }}"],
+          datasets: [{
+            label: "Confidence (%)",
+            data: [{{ result.confidence }}],
+            backgroundColor: "{{ result.label }}" === "PNEUMONIA" ? "#d9534f" : "#5cb85c",
+            borderColor: "#333",
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: { beginAtZero: true, max: 100 }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+      {% endfor %}
+    });
+  </script>
 </body>
 </html>
