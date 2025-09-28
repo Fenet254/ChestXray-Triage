@@ -1,43 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>AI-Powered Pneumonia Detection</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <title>Pneumonia Detection</title>
 </head>
 <body>
-    <div class="container py-5">
-        <div class="text-center mb-5">
-            <h1 class="display-4 text-primary">AI-Powered Pneumonia Detection</h1>
-            <p class="lead text-muted">Upload a chest X-ray and let AI assist in diagnosis.</p>
-        </div>
+    <h1>Upload Chest X-ray</h1>
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="xray_image" required>
+        <button type="submit">Predict</button>
+    </form>
 
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card shadow p-4">
-                    <h4 class="mb-3 text-center">Upload Chest X-ray</h4>
-
-                    <div class="mb-3 text-center">
-                        <img id="preview" src="#" alt="Image Preview" class="img-fluid rounded shadow" style="max-height: 300px; display: none;">
-                    </div>
-
-                    <form method="POST" enctype="multipart/form-data">
-                        <input type="file" name="xray_image" class="form-control mb-3" required>
-                        <button type="submit" class="btn btn-primary w-100">Predict</button>
-                    </form>
-
-                    {% if prediction %}
-                        <div class="alert alert-success mt-4 text-center">
-                            <h5>🩺 Prediction Result:</h5>
-                            <p class="mb-0"><strong>{{ prediction }}</strong></p>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
+    {% if prediction %}
+        <h2>Prediction: {{ prediction }}</h2>
+    {% endif %}
 </body>
 </html>
