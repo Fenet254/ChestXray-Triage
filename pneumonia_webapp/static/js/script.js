@@ -2,7 +2,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const predictions = window.predictionsData;
 
   predictions.forEach((result, index) => {
-    const ctx = document.getElementById(`chart${index + 1}`).getContext("2d");
+    const canvasId = `chart${index + 1}`;
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
     new Chart(ctx, {
       type: "bar",
       data: {

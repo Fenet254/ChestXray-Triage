@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Pneumonia Detection</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<canvas id="chart{{ loop.index }}"></canvas>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
   <div class="container">
@@ -34,12 +32,10 @@
       <div class="prediction-item">
         <h3>Image {{ loop.index }}</h3>
 
-        <!-- Original X-ray -->
         <div class="image-block">
           <img src="{{ url_for('static', filename='uploads/' + result.filename) }}" alt="X-ray Image">
         </div>
 
-        <!-- Prediction Analysis -->
         <div class="analysis-box">
           <div class="analysis-header">
             <div>
@@ -52,7 +48,6 @@
             </div>
           </div>
 
-          <!-- Chart -->
           <div class="chart-container">
             <canvas id="chart{{ loop.index }}"></canvas>
           </div>
@@ -60,7 +55,6 @@
       </div>
       {% endfor %}
 
-      <!-- PDF Report Button -->
       <form method="POST" action="/download_report">
         <input type="hidden" name="patient_name" value="{{ patient.name }}">
         <input type="hidden" name="patient_age" value="{{ patient.age }}">
@@ -76,6 +70,11 @@
     {% endif %}
   </div>
 
-  <!-- Chart.js Script -->
-  </body>
+  {% if predictions %}
+  <script>
+    window.predictionsData = {{ predictions | tojson }};
+  </script>
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  {% endif %}
+</body>
 </html>
