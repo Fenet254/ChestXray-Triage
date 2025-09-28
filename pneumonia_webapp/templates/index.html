@@ -1,17 +1,107 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Pneumonia Detection</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(to right, #74ebd5, #ACB6E5);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        input[type="file"] {
+            margin: 15px 0;
+        }
+
+        button {
+            background-color: #0078D7;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #005fa3;
+        }
+
+        #preview {
+            margin-top: 20px;
+            max-width: 100%;
+            border-radius: 8px;
+        }
+
+        #loader {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .prediction {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #0078D7;
+        }
+    </style>
 </head>
 <body>
-    <h1>Upload Chest X-ray</h1>
-    <form method="POST" enctype="multipart/form-data">
-        <input type="file" name="xray_image" required>
-        <button type="submit">Predict</button>
-    </form>
+    <div class="container">
+        <h1>Pneumonia Detection</h1>
+        <form method="POST" enctype="multipart/form-data" onsubmit="showLoader()">
+            <input type="file" name="xray_image" accept="image/*" onchange="previewImage(event)" required>
+            <br>
+            <button type="submit">Predict</button>
+        </form>
 
-    {% if prediction %}
-        <h2>Prediction: {{ prediction }}</h2>
-    {% endif %}
+        <img id="preview" src="#" alt="Image Preview" style="display:none;">
+        <div id="loader">
+            <img src="https://i.gifer.com/ZZ5H.gif" alt="Loading..." width="50">
+            <p>Analyzing image...</p>
+        </div>
+
+        {% if prediction %}
+            <div class="prediction">Prediction: {{ prediction }}</div>
+        {% endif %}
+    </div>
+
+    <script>
+        function previewImage(event) {
+            const reader = new FileReader();
+            reader.onload = function(){
+                const output = document.getElementById('preview');
+                output.src = reader.result;
+                output.style.display = 'block';
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        function showLoader() {
+            document.getElementById('loader').style.display = 'block';
+        }
+    </script>
 </body>
 </html>
