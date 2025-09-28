@@ -1,7 +1,24 @@
 body {
-    background-color: #f8f9fa;
+    background: linear-gradient(to right, #e0f7fa, #ffffff);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-h2 {
-    color: #343a40;
+h1 {
+    color: #007bff;
+}
+
+.card {
+    border-radius: 12px;
+    background-color: #ffffff;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border: none;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
 }

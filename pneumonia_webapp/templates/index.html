@@ -2,22 +2,35 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Pneumonia Classifier</title>
+    <title>AI-Powered Pneumonia Detection</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body class="container mt-5">
-    <h2 class="mb-4">Upload Chest X-ray Image</h2>
-
-    <form method="POST" enctype="multipart/form-data">
-        <input type="file" name="xray_image" class="form-control mb-3" required>
-        <button type="submit" class="btn btn-primary">Predict</button>
-    </form>
-
-    {% if prediction %}
-        <div class="alert alert-info mt-4">
-            <strong>Prediction:</strong> {{ prediction }}
+<body>
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h1 class="display-4 text-primary">AI-Powered Pneumonia Detection</h1>
+            <p class="lead text-muted">Upload a chest X-ray and let AI assist in diagnosis.</p>
         </div>
-    {% endif %}
+
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow p-4">
+                    <h4 class="mb-3 text-center">Upload Chest X-ray</h4>
+                    <form method="POST" enctype="multipart/form-data">
+                        <input type="file" name="xray_image" class="form-control mb-3" required>
+                        <button type="submit" class="btn btn-primary w-100">Predict</button>
+                    </form>
+
+                    {% if prediction %}
+                        <div class="alert alert-success mt-4 text-center">
+                            <h5>🩺 Prediction Result:</h5>
+                            <p class="mb-0"><strong>{{ prediction }}</strong></p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
