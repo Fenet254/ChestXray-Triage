@@ -21,7 +21,7 @@ def predict_image(img_path):
     img_array = np.expand_dims(img_array, axis=0)
 
     prediction = model.predict(img_array)[0][0]
-    confidence = round(prediction * 100, 2) if prediction > 0.5 else round((1 - prediction) * 100, 2)
+    confidence = float(round(prediction * 100, 2)) if prediction > 0.5 else float(round((1 - prediction) * 100, 2))
     label = "PNEUMONIA" if prediction > 0.5 else "NORMAL"
 
     return label, confidence
@@ -102,7 +102,12 @@ def generate_pdf(patient_data, predictions, output_path):
 # PDF download route
 @app.route("/download_report", methods=["POST"])
 def download_report():
-    patient_data = request.form.to_dict()
+    patient_data = {
+    "name": request.form.get("patient_name", "Unknown"),
+    "age": request.form.get("patient_age", "N/A"),
+    "gender": request.form.get("patient_gender", "N/A"),
+    "symptoms": request.form.get("patient_symptoms", "N/A")
+}
     predictions = eval(request.form["predictions"])  # Use safer serialization in production
 
     pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{uuid.uuid4().hex}_report.pdf")
