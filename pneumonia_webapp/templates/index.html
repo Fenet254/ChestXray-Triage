@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Pneumonia Detection</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
@@ -13,7 +14,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
         }
 
         .container {
@@ -22,7 +23,7 @@
             border-radius: 12px;
             box-shadow: 0 8px 16px rgba(0,0,0,0.2);
             text-align: center;
-            max-width: 500px;
+            max-width: 600px;
             width: 100%;
         }
 
@@ -53,15 +54,9 @@
             background-color: #005fa3;
         }
 
-        #preview {
-            margin-top: 20px;
-            max-width: 100%;
-            border-radius: 8px;
-        }
-
         .prediction {
             margin-top: 20px;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             color: #0078D7;
         }
@@ -74,12 +69,28 @@
         .patient-info p {
             margin: 5px 0;
         }
+
+        .image-block {
+            margin-top: 30px;
+            border-top: 1px solid #ccc;
+            padding-top: 20px;
+        }
+
+        .image-block img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        canvas {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Pneumonia Detection</h1>
-        <form method="POST" enctype="multipart/form-data" onsubmit="showLoader()">
+        <form method="POST" enctype="multipart/form-data">
             <input type="text" name="patient_name" placeholder="Patient Name" required>
             <input type="number" name="patient_age" placeholder="Age" required>
             <select name="patient_gender" required>
@@ -89,19 +100,9 @@
                 <option value="Other">Other</option>
             </select>
             <textarea name="patient_symptoms" placeholder="Symptoms" rows="3" required></textarea>
-            <input type="file" name="xray_image" accept="image/*" onchange="previewImage(event)" required>
+            <input type="file" name="xray_images" accept="image/*" multiple required>
             <button type="submit">Predict</button>
         </form>
-
-        {% if image_path %}
-            <img id="preview" src="{{ image_path }}" alt="X-ray Image">
-        {% endif %}
-
-        {% if prediction %}
-            <div class="prediction">
-                Prediction: {{ prediction }} ({{ confidence }}% confidence)
-            </div>
-        {% endif %}
 
         {% if patient %}
             <div class="patient-info">
@@ -112,22 +113,47 @@
                 <p><strong>Symptoms:</strong> {{ patient.symptoms }}</p>
             </div>
         {% endif %}
+
+        {% if predictions %}
+            {% for result in predictions %}
+                <div class="image-block">
+                    <img src="{{ result.filepath }}" alt="X-ray Image">
+                    <div class="prediction">
+                        {{ result.label }} ({{ result.confidence }}% confidence)
+                    </div>
+                    <canvas id="chart{{ loop.index }}" width="400" height="200"></canvas>
+                    <script>
+                        const ctx{{ loop.index }} = document.getElementById('chart{{ loop.index }}').getContext('2d');
+                        new Chart(ctx{{ loop.index }}, {
+                            type: 'bar',
+                            data: {
+                                labels: ['{{ result.label }}'],
+                                datasets: [{
+                                    label: 'Confidence (%)',
+                                    data: [{{ result.confidence }}],
+                                    backgroundColor: '{{ result.label }}' === 'PNEUMONIA' ? '#d9534f' : '#5cb85c',
+                                    borderColor: '#333',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        max: 100
+                                    }
+                                },
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        });
+                    </script>
+                </div>
+            {% endfor %}
+        {% endif %}
     </div>
-
-    <script>
-        function previewImage(event) {
-            const reader = new FileReader();
-            reader.onload = function(){
-                const output = document.getElementById('preview');
-                output.src = reader.result;
-                output.style.display = 'block';
-            };
-            reader.readAsDataURL(event.target.files[0]);
-        }
-
-        function showLoader() {
-            // Placeholder for future loader animation
-        }
-    </script>
 </body>
 </html>
