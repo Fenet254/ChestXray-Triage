@@ -17,6 +17,11 @@
             <div class="col-md-6">
                 <div class="card shadow p-4">
                     <h4 class="mb-3 text-center">Upload Chest X-ray</h4>
+
+                    <div class="mb-3 text-center">
+                        <img id="preview" src="#" alt="Image Preview" class="img-fluid rounded shadow" style="max-height: 300px; display: none;">
+                    </div>
+
                     <form method="POST" enctype="multipart/form-data">
                         <input type="file" name="xray_image" class="form-control mb-3" required>
                         <button type="submit" class="btn btn-primary w-100">Predict</button>
@@ -32,5 +37,6 @@
             </div>
         </div>
     </div>
+
 </body>
 </html>
