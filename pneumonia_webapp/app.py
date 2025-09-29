@@ -1,21 +1,23 @@
-
 from flask import Flask, request, render_template, send_file, redirect, url_for, session
 import os
 import uuid
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from datetime import datetime
-from infer import predict_image  
+from infer import predict_image  # Make sure infer.py is in the same folder
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  
+app.secret_key = os.urandom(24)  # More secure than hardcoded string
 
+# Upload folder setup
 UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+# PDF generation
 def generate_pdf(patient_data, predictions):
-    report_path = os.path.join(app.config['UPLOAD_FOLDER'], 'report.pdf')
+    report_filename = f"report_{uuid.uuid4().hex}.pdf"
+    report_path = os.path.join(app.config['UPLOAD_FOLDER'], report_filename)
     c = canvas.Canvas(report_path, pagesize=letter)
 
     c.setFont("Helvetica", 12)
@@ -36,6 +38,7 @@ def generate_pdf(patient_data, predictions):
     c.save()
     return report_path
 
+# Main route
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
@@ -49,11 +52,17 @@ def index():
         predictions = []
         files = request.files.getlist("xray_images")
         for file in files:
-            if file:
+            if file and file.filename:
                 filename = f"{uuid.uuid4().hex}_{file.filename}"
                 filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 file.save(filepath)
-                label, confidence = predict_image(filepath)
+
+                try:
+                    label, confidence = predict_image(filepath)
+                except Exception as e:
+                    label, confidence = "Error", 0.0
+                    print(f"Prediction failed for {filename}: {e}")
+
                 predictions.append({
                     "filename": filename,
                     "filepath": filepath,
@@ -61,8 +70,8 @@ def index():
                     "confidence": float(confidence)
                 })
 
-        generate_pdf(patient, predictions)
-
+        report_path = generate_pdf(patient, predictions)
+        session['report_path'] = report_path
         session['predictions'] = predictions
         session['patient'] = patient
 
@@ -72,13 +81,15 @@ def index():
     patient = session.get('patient', {})
     return render_template("index.html", predictions=predictions, patient=patient)
 
+# Download PDF
 @app.route("/download_report")
 def download_report():
-    report_path = os.path.join(app.config['UPLOAD_FOLDER'], 'report.pdf')
-    if os.path.exists(report_path):
+    report_path = session.get('report_path')
+    if report_path and os.path.exists(report_path):
         return send_file(report_path, as_attachment=True)
     return "Report not available.", 404
 
+# Clear session
 @app.route("/clear_session")
 def clear_session():
     session.clear()
