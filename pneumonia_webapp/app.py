@@ -1,118 +1,89 @@
-from flask import Flask, request, render_template, send_file
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import image
-import numpy as np
+# app.py
+
+from flask import Flask, request, render_template, send_file, redirect, url_for, session
 import os
 import uuid
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from datetime import datetime
+from infer import predict_image  # ✅ Import from infer.py
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.secret_key = 'your_secret_key'  # Replace with a secure key
 
-# Load the trained model
-model = load_model("model/pneumonia_classifier_model.keras")
+UPLOAD_FOLDER = 'static/uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Prediction function
-def predict_image(img_path):
-    img = image.load_img(img_path, target_size=(150, 150))
-    img_array = image.img_to_array(img) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
+def generate_pdf(patient_data, predictions):
+    report_path = os.path.join(app.config['UPLOAD_FOLDER'], 'report.pdf')
+    c = canvas.Canvas(report_path, pagesize=letter)
 
-    prediction = model.predict(img_array)[0][0]
-    confidence = float(round(prediction * 100, 2)) if prediction > 0.5 else float(round((1 - prediction) * 100, 2))
-    label = "PNEUMONIA" if prediction > 0.5 else "NORMAL"
+    c.setFont("Helvetica", 12)
+    c.drawString(50, 750, f"Patient Name: {patient_data.get('name', '')}")
+    c.drawString(50, 730, f"Age: {patient_data.get('age', '')}")
+    c.drawString(50, 710, f"Gender: {patient_data.get('gender', '')}")
+    c.drawString(50, 690, f"Symptoms: {patient_data.get('symptoms', '')}")
+    c.drawString(50, 670, f"Report Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
-    return label, confidence
+    y = 640
+    for pred in predictions:
+        c.drawString(50, y, f"Image: {pred['filename']} - Label: {pred['label']} - Confidence: {pred['confidence']:.2f}")
+        y -= 20
+        if y < 50:
+            c.showPage()
+            y = 750
 
-# Home route
+    c.save()
+    return report_path
+
 @app.route("/", methods=["GET", "POST"])
-def home():
-    predictions = []
-    patient_data = {}
-
+def index():
     if request.method == "POST":
-        files = request.files.getlist("xray_images")
-        patient_data["name"] = request.form["patient_name"]
-        patient_data["age"] = request.form["patient_age"]
-        patient_data["gender"] = request.form["patient_gender"]
-        patient_data["symptoms"] = request.form["patient_symptoms"]
+        patient = {
+            "name": request.form.get("patient_name", ""),
+            "age": request.form.get("patient_age", ""),
+            "gender": request.form.get("patient_gender", ""),
+            "symptoms": request.form.get("patient_symptoms", "")
+        }
 
+        predictions = []
+        files = request.files.getlist("xray_images")
         for file in files:
             if file:
                 filename = f"{uuid.uuid4().hex}_{file.filename}"
                 filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 file.save(filepath)
-
                 label, confidence = predict_image(filepath)
                 predictions.append({
                     "filename": filename,
                     "filepath": filepath,
                     "label": label,
-                    "confidence": confidence,
-                    "change": round(np.random.uniform(0.5, 5.0), 2)
+                    "confidence": float(confidence)
                 })
 
-    return render_template("index.html", predictions=predictions, patient=patient_data)
+        generate_pdf(patient, predictions)
 
-# PDF generation
-def generate_pdf(patient_data, predictions, output_path):
-    c = canvas.Canvas(output_path, pagesize=letter)
-    width, height = letter
-    y = height - 50
+        session['predictions'] = predictions
+        session['patient'] = patient
 
-    c.setFont("Helvetica-Bold", 16)
-    c.drawString(50, y, "Pneumonia Detection Report")
-    y -= 30
+        return redirect(url_for('index'))
 
-    c.setFont("Helvetica", 12)
-    c.drawString(50, y, f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    y -= 20
-    c.drawString(50, y, f"Name: {patient_data['name']}")
-    y -= 20
-    c.drawString(50, y, f"Age: {patient_data['age']}")
-    y -= 20
-    c.drawString(50, y, f"Gender: {patient_data['gender']}")
-    y -= 20
-    c.drawString(50, y, f"Symptoms: {patient_data['symptoms']}")
-    y -= 40
+    predictions = session.get('predictions', [])
+    patient = session.get('patient', {})
+    return render_template("index.html", predictions=predictions, patient=patient)
 
-    for i, result in enumerate(predictions):
-        if y < 150:
-            c.showPage()
-            y = height - 50
-
-        c.setFont("Helvetica-Bold", 14)
-        c.drawString(50, y, f"Image {i+1}: {result['filename']}")
-        y -= 20
-        c.setFont("Helvetica", 12)
-        c.drawString(50, y, f"Prediction: {result['label']} ({result['confidence']}% confidence)")
-        y -= 20
-
-        try:
-            c.drawImage(result['filepath'], 50, y - 150, width=200, height=150)
-            y -= 170
-        except:
-            c.drawString(50, y, "Image preview unavailable.")
-            y -= 30
-
-    c.save()
-
-# PDF download route
-@app.route("/download_report", methods=["POST"])
+@app.route("/download_report")
 def download_report():
-    patient_data = {
-    "name": request.form.get("patient_name", "Unknown"),
-    "age": request.form.get("patient_age", "N/A"),
-    "gender": request.form.get("patient_gender", "N/A"),
-    "symptoms": request.form.get("patient_symptoms", "N/A")
-}
-    predictions = eval(request.form["predictions"])  # Use safer serialization in production
+    report_path = os.path.join(app.config['UPLOAD_FOLDER'], 'report.pdf')
+    if os.path.exists(report_path):
+        return send_file(report_path, as_attachment=True)
+    return "Report not available.", 404
 
-    pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{uuid.uuid4().hex}_report.pdf")
-    generate_pdf(patient_data, predictions, pdf_path)
-    return send_file(pdf_path, as_attachment=True)
+@app.route("/clear_session")
+def clear_session():
+    session.clear()
+    return redirect(url_for('index'))
 
 if __name__ == "__main__":
     app.run(debug=True)
