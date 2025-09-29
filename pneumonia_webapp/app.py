@@ -1,4 +1,3 @@
-# app.py
 
 from flask import Flask, request, render_template, send_file, redirect, url_for, session
 import os
@@ -6,10 +5,10 @@ import uuid
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from datetime import datetime
-from infer import predict_image  # ✅ Import from infer.py
+from infer import predict_image  
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Replace with a secure key
+app.secret_key = 'your_secret_key'  
 
 UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
