@@ -1,4 +1,0 @@
-kaggle
-pandas
-scikit-learn
-Pillow
