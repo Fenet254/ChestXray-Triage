@@ -6,4 +6,4 @@ opencv-python==4.8.0.76
 reportlab==4.0.4
 matplotlib==3.7.2
 gunicorn==21.2.0       
-python-dotenv==1.0.0   variables
+python-dotenv==1.0.0   
