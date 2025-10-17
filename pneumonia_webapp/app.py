@@ -7,14 +7,12 @@ from datetime import datetime
 from infer import predict_image  # Make sure infer.py is in the same folder
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)  # More secure than hardcoded string
+app.secret_key = os.urandom(24)
 
-# Upload folder setup
 UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# PDF generation
 def generate_pdf(patient_data, predictions):
     report_filename = f"report_{uuid.uuid4().hex}.pdf"
     report_path = os.path.join(app.config['UPLOAD_FOLDER'], report_filename)
@@ -38,7 +36,6 @@ def generate_pdf(patient_data, predictions):
     c.save()
     return report_path
 
-# Main route
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
@@ -81,7 +78,6 @@ def index():
     patient = session.get('patient', {})
     return render_template("index.html", predictions=predictions, patient=patient)
 
-# Download PDF
 @app.route("/download_report")
 def download_report():
     report_path = session.get('report_path')
@@ -89,7 +85,6 @@ def download_report():
         return send_file(report_path, as_attachment=True)
     return "Report not available.", 404
 
-# Clear session
 @app.route("/clear_session")
 def clear_session():
     session.clear()
