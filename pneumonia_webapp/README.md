@@ -1,7 +1,7 @@
-🧠 Pneumonia Detection Web App
+Pneumonia Detection Web App
 An AI-powered diagnostic tool that detects pneumonia from chest X-ray images using a deep learning model built on MobileNetV2. The app provides a clean web interface for uploading images, entering patient data, viewing predictions, and downloading PDF reports.
 
-🚀 Features
+ Features
 - Upload multiple chest X-ray images
 - Predict pneumonia vs. normal using a trained CNN model
 - Display confidence scores and simulated change metrics
@@ -10,7 +10,7 @@ An AI-powered diagnostic tool that detects pneumonia from chest X-ray images usi
 - Clean UI built with Flask and Bootstrap
 - Chart.js integration for visualizing prediction trends
 
-🧰 Tech Stack
+Tech Stack
     Layer           Tools Used
     Frontend         HTML, CSS, Bootstrap Chart.js
    Backend          Flask, TensorFlow/Keras, NumPy
@@ -20,7 +20,7 @@ An AI-powered diagnostic tool that detects pneumonia from chest X-ray images usi
 
 
 
-📁 Folder Structur
+Folder Structur
 
 pneumonia_webapp/
 ├── app.py
@@ -35,8 +35,7 @@ pneumonia_webapp/
 ├── data/
 │   ├── train/
 │   └── val/
-
-🧪 Model Training (Optional)
+ Model Training (Optional)
 If retraining is needed, use train_model.py with your dataset structured as:
 data/
 ├── train/
@@ -61,8 +60,7 @@ python app.py
 - Open in browser:
 
 http://127.0.0.1:5000
-
-📄 Sample PDF Report
+ Sample PDF Report
 Each report includes:
 - Patient details
 - Prediction results
